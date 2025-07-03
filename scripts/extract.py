@@ -5,7 +5,15 @@ import json
 from datetime import datetime
 import logging  
 
-logger = logging.getLogger("airflow.task") 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+)
+
+logger = logging.getLogger(__name__) 
+
+# TODO: Refatorar o metodo pra deixar ele mais clean
+# TODO: Teste unitario
 
 def extract_breweries():
     url_base = "https://api.openbrewerydb.org/v1/breweries"
@@ -15,24 +23,25 @@ def extract_breweries():
 
     logger.info(f"[Extract] - Starting data extraction from api.openbrewerydb...")
 
-    # TODO: adicionar tratamento de excecao ao chamar a API
+    try:
+        while True:
+            response = requests.get(url_base, params={"per_page": per_page, "page": page})
+            if response.status_code != 200:
+                logger.error(f"[Extract] - API request failed at page {page} with status code:{response.status_code} ")
+                raise Exception(f"Error - API request failed with status code:  {response.status_code}")
 
-    while True:
-        response = requests.get(url_base, params={"per_page": per_page, "page": page})
-        if response.status_code != 200:
-            logger.error(f"[Extract] - API request failed at page {page} with status code:{response.status_code} ")
-            raise Exception(f"Error - API request failed with status code:  {response.status_code}")
+            data = response.json()
+            if not data:
+                logger.info(f"[Extract] - No more data, fineshed at page:  {page - 1}.")
+                break
 
-        data = response.json()
-        if not data:
-            logger.info(f"[Extract] - No more data, fineshed at page:  {page - 1}.")
-            break
-
-        all_data.extend(data)
-        
-        logger.info(f"[Extract] - Fineshed extracting {len(data)} records from page:  {page}.")
-        page += 1
-
+            all_data.extend(data)
+            
+            logger.info(f"[Extract] - Fineshed extracting {len(data)} records from page:  {page}.")
+            page += 1
+    except Exception as e:
+        logger.exception(f"[Extract] - Failed to get an response from API with the following exceptio: {e}.")
+    
     timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
     os.makedirs("data/bronze", exist_ok=True)
     file_path = f"data/bronze/breweries_raw_{timestamp}.json"
