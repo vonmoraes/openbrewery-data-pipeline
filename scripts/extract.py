@@ -1,4 +1,4 @@
-# src/extract.py
+# srcipts/extract.py
 import os
 import requests
 import json
