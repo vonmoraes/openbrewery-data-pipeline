@@ -4,6 +4,10 @@ import requests
 import json
 from datetime import datetime
 
+import logging  
+
+logger = logging.getLogger("airflow.task")
+
 # TODO: Melhorar os textos do console
 # TODO: Adicionar logging para nao deixar as mensagens so no console
 

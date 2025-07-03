@@ -1,33 +1,4 @@
-# from airflow import DAG
-# from airflow.operators.python import PythonOperator
-# from datetime import datetime
-# # from src.extract import extract_breweries
-# # import sys
-# # sys.path.append('/opt/airflow/src')
-
-
-# default_args = {
-#     'owner': 'airflow',
-#     'start_date': datetime(2023, 1, 1),
-#     'retries': 1,
-# }
-
-# with DAG(
-#     dag_id='brewery_pipeline',
-#     default_args=default_args,
-#     schedule_interval=None,
-#     catchup=False,
-#     description='ETL pipeline for Open Brewery DB',
-# ) as dag:
-
-#     extract_task = PythonOperator(
-#         task_id='extract_breweries',
-#         python_callable=null,
-#     )
-
-#     extract_task
-
-
+# openbrewery-pipeline.py
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime, timedelta
@@ -43,7 +14,7 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2024, 1, 1),
-    'retries': 1,
+    'retries': 3,
     'retry_delay': timedelta(minutes=5),
 }
 
@@ -51,7 +22,7 @@ dag = DAG(
     'brewery_pipeline',
     default_args=default_args,
     description='ETL pipeline for Open Brewery DB',
-    schedule_interval=timedelta(days=1),  # frequencia
+    schedule_interval=timedelta(days=7),  # frequencia
 )
 
 run_task = PythonOperator(
