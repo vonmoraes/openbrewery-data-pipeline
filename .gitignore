@@ -208,6 +208,7 @@ __marimo__/
 
 # Airflow
 logs/
+airflow_logs/
 __pycache__/
 *.pyc
 *.pyo
