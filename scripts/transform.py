@@ -74,11 +74,13 @@ pd.DataFrame
 def clean_breweries_df(raw_df:pd.DataFrame) -> pd.DataFrame:
     treated_df = raw_df.copy()
     treated_df = treated_df.drop_duplicates(subset=["id"])
-    # treated_df = treated_df.dropna(subset=["name", "state"])
+    treated_df = treated_df.dropna(subset=["name", "state"])
+    treated_df = treated_df.dropna(subset=["name", "city"])
     treated_df['phone'] = treated_df['phone'].str.replace(r"\D", "", regex=True)
     treated_df['website_url'] = treated_df['website_url'].str.replace("@gmail", "")
     treated_df[treated_df.columns] = treated_df.apply(lambda x: x.str.strip() if x.dtype == object else x)
-    
+    treated_df['country'] = treated_df['country'].apply(clean_country_state)
+    treated_df['state'] = treated_df['state'].apply(clean_country_state)
     treated_df = treated_df.astype({
         'id': 'string',
         'name': 'string',
@@ -102,12 +104,22 @@ def clean_breweries_df(raw_df:pd.DataFrame) -> pd.DataFrame:
     treated_df = treated_df.replace({pd.NA,"<NA>", np.nan }, None)  # padronizar a falta de dados
     return treated_df
 
+
+def clean_country_state(value):
+  if pd.isna(value): 
+      return None
+  value = unicodedata.normalize('NFKD', value)
+  value = ''.join([c for c in value if not unicodedata.combining(c)])
+  value = value.strip()
+  value = re.sub(r'\s+', ' ', value)
+  value = value.title()
+  value = re.sub(r'[^\w\s]', '', value)
+  return value
+
 '''
 - Transforms raw brewery data from the Bronze layer to the Silver layer.
 '''
 def transform_breweries_bronze_to_silver():
-    # bronze_path = "data/bronze/breweries"
-    # silver_path = "data/silver/"
     os.makedirs(silver_path, exist_ok=True)
 
     logger.info(f"[Transform] - Starting data transformation from {bronze_path} files...")
@@ -131,6 +143,8 @@ def transform_breweries_bronze_to_silver():
             silver_path,
             partition_cols=['country', 'state'],
             engine = 'pyarrow',
+            compression ='snappy',
+            use_dictionary = False, 
             index = False
         )
         logger.info(f"[Transform] - Parquet partition by country and state saved in {silver_path}.")
