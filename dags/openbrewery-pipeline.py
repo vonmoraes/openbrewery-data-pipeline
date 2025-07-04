@@ -24,6 +24,7 @@ dag = DAG(
     schedule_interval=timedelta(days=7),  # frequencia
 )
 
+# renomear para quando tiver a silver
 run_task = PythonOperator(
     task_id='get_data_task',
     python_callable=extract_breweries,

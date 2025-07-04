@@ -1,9 +1,9 @@
-# srcipts/extract.py
 import os
 import requests
 import json
 from datetime import datetime
 import logging  
+import time
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # TODO: Refatorar o metodo pra deixar ele mais clean
 # TODO: Teste unitario
-
+# TODO: adicionar tentativas de buscar dados por pagina (exemplo tentar 3 vezes uma mesma pagina)
 def extract_breweries():
     url_base = "https://api.openbrewerydb.org/v1/breweries"
     per_page = 200 # Limite da API
@@ -39,12 +39,13 @@ def extract_breweries():
             
             logger.info(f"[Extract] - Fineshed extracting {len(data)} records from page:  {page}.")
             page += 1
+            time.sleep(0.1)
     except Exception as e:
         logger.exception(f"[Extract] - Failed to get an response from API with the following exceptio: {e}.")
     
     timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-    os.makedirs("data/bronze", exist_ok=True)
-    file_path = f"data/bronze/breweries_raw_{timestamp}.json"
+    os.makedirs("data/bronze/breweries", exist_ok=True)
+    file_path = f"data/bronze/breweries/breweries_raw_{timestamp}.json"
 
     try:
         with open(file_path, "w", encoding="utf-8") as f:
