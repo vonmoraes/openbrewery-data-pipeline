@@ -3,7 +3,6 @@ import glob
 import logging
 import pandas as pd
 import numpy as np
-import pyarrow as pa
 from datetime import datetime
 import unicodedata
 import re
@@ -16,24 +15,9 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__) 
 
-# parquet lidar com nome de colunas e padronizacao
-def limpar_colunas(df: pd.DataFrame) -> pd.DataFrame:
-    def remover_acentos(txt):
-        nfkd = unicodedata.normalize('NFKD', txt)
-        return ''.join([c for c in nfkd if not unicodedata.combining(c)])
-
-    colunas_limpa = []
-    for col in df.columns:
-        col = col.strip()  # remove espaços nas extremidades
-        col = remover_acentos(col)  # remove acentos
-        col = col.lower()  # minusculo
-        col = re.sub(r'\s+', '', col)  # espaços (um ou mais) viram underline
-        col = re.sub(r'[^\w]', '', col)  # remove caracteres especiais que não são letras, números ou 
-        colunas_limpa.append(col)
-
-    df.columns = colunas_limpa
-    return df
-
+'''
+- Brings the latest file from folder path. 
+'''
 def get_latest_file(folder_path, pattern="*"):
     full_pattern = os.path.join(folder_path, pattern)
     files = list(filter(os.path.isfile, glob.glob(full_pattern)))
@@ -41,16 +25,57 @@ def get_latest_file(folder_path, pattern="*"):
         raise Exception(f"NotFoundFile") 
     files.sort(key=os.path.getmtime)
     latest_file = files[-1]
-  
     return latest_file
 
+'''
+- Cleans and standardizes column names in a DataFrame.
+
+Parameters:
+-----------
+df : pd.DataFrame
+ Input DataFrame with raw column names.
+
+Returns:
+--------
+pd.DataFrame
+ DataFrame with cleaned column names.
+'''
+def standard_columns_names(df: pd.DataFrame) -> pd.DataFrame:
+    def remove_nfkd(txt):
+        nfkd = unicodedata.normalize('NFKD', txt)
+        return ''.join([c for c in nfkd if not unicodedata.combining(c)])
+    new_columns_names = []
+    for col in df.columns:
+        col = col.strip()
+        col = remove_nfkd(col)
+        col = col.lower()
+        col = re.sub(r'\s+', '', col)
+        col = re.sub(r'[^\w]', '', col)
+        new_columns_names.append(col)
+    df.columns = new_columns_names
+    return df
+
+'''
+- Cleans and processes the breweries DataFrame.
+
+Parameters:
+-----------
+raw_df : pd.DataFrame
+ Input raw DataFrame.
+
+Returns:
+--------
+pd.DataFrame
+ Cleaned and processed DataFrame.
+'''
 def clean_breweries_df(raw_df:pd.DataFrame) -> pd.DataFrame:
     treated_df = raw_df.copy()
     treated_df = treated_df.drop_duplicates(subset=["id"])
-    treated_df = treated_df.dropna(subset=["name", "state"])
+    # treated_df = treated_df.dropna(subset=["name", "state"])
     treated_df['phone'] = treated_df['phone'].str.replace(r"\D", "", regex=True)
     treated_df['website_url'] = treated_df['website_url'].str.replace("@gmail", "")
-    treated_df['website_url'] = treated_df['website_url'].str.strip()
+    treated_df[treated_df.columns] = treated_df.apply(lambda x: x.str.strip() if x.dtype == object else x)
+    
     treated_df = treated_df.astype({
         'id': 'string',
         'name': 'string',
@@ -68,13 +93,16 @@ def clean_breweries_df(raw_df:pd.DataFrame) -> pd.DataFrame:
         'website_url': 'string',
         'state': 'string',
         'street': 'string',
-        'createdAt': 'datetime64[ns]'
+        'created_at': 'datetime64[ns]'
     })
-    treated_df = limpar_colunas(treated_df)
+    treated_df = standard_columns_names(treated_df)
     treated_df = treated_df.replace({pd.NA,"<NA>", np.nan }, None)  # padronizar a falta de dados
     return treated_df
 
-def transform_breweries():
+'''
+- Transforms raw brewery data from the Bronze layer to the Silver layer.
+'''
+def transform_breweries_bronze_to_silver():
     bronze_path = "data/bronze/breweries"
     silver_path = "data/silver/"
     os.makedirs(silver_path, exist_ok=True)
@@ -87,21 +115,23 @@ def transform_breweries():
         raise e
         
     raw_breweries_df = pd.read_json(latest_file)
-    raw_breweries_df['createdAt'] = datetime.now().strftime("%Y%m%dT%H%M%S")
+    raw_breweries_df['created_at'] = datetime.now().strftime("%Y%m%dT%H%M%S")
+    
     breweries_df = clean_breweries_df(raw_breweries_df)
     logging.info(f"[Transform] - Cleaned data: {len(raw_breweries_df)} → {len(breweries_df)}.")
     
-    shutil.rmtree(silver_path)
-    breweries_df.to_parquet(
-        silver_path,
-        partition_cols=['country'],
-        engine = 'pyarrow',
-        index = False
-    )
-    
-    print(breweries_df.dtypes)
-    print(breweries_df.head(10))
+    try:
+        shutil.rmtree(silver_path)
+        breweries_df.to_parquet(
+            silver_path,
+            partition_cols=['country', 'state'],
+            engine = 'pyarrow',
+            index = False
+        )
+    except Exception as e:
+        logger.exception(f"[Transform] - Execption raised when saving .parquet files in {silver_path}.")
+        raise e
     
     
 if __name__ == '__main__':
-    transform_breweries()
+    transform_breweries_bronze_to_silver()
