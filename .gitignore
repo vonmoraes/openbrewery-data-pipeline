@@ -217,3 +217,4 @@ airflow.db
 airflow-webserver.pid
 .venv/
 .env
+data/
