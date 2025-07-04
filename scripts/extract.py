@@ -12,6 +12,8 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__) 
 
+bronze_path = "data/bronze/breweries/"
+
 # TODO: Refatorar o metodo pra deixar ele mais clean
 # TODO: Teste unitario
 # TODO: adicionar tentativas de buscar dados por pagina (exemplo tentar 3 vezes uma mesma pagina)
@@ -44,8 +46,8 @@ def extract_breweries():
         logger.exception(f"[Extract] - Failed to get an response from API with the following exceptio: {e}.")
     
     timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-    os.makedirs("data/bronze/breweries", exist_ok=True)
-    file_path = f"data/bronze/breweries/breweries_raw_{timestamp}.json"
+    os.makedirs(bronze_path, exist_ok=True)
+    file_path = f"{bronze_path}breweries_raw_{timestamp}.json"
 
     try:
         with open(file_path, "w", encoding="utf-8") as f:

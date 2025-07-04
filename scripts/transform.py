@@ -15,6 +15,9 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__) 
 
+bronze_path = "data/bronze/breweries/"
+silver_path = "data/silver/"
+
 '''
 - Brings the latest file from folder path. 
 '''
@@ -103,9 +106,11 @@ def clean_breweries_df(raw_df:pd.DataFrame) -> pd.DataFrame:
 - Transforms raw brewery data from the Bronze layer to the Silver layer.
 '''
 def transform_breweries_bronze_to_silver():
-    bronze_path = "data/bronze/breweries"
-    silver_path = "data/silver/"
+    # bronze_path = "data/bronze/breweries"
+    # silver_path = "data/silver/"
     os.makedirs(silver_path, exist_ok=True)
+
+    logger.info(f"[Transform] - Starting data transformation from {bronze_path} files...")
 
     try:
         latest_file = get_latest_file(bronze_path, "breweries_raw_*.json")
@@ -128,8 +133,9 @@ def transform_breweries_bronze_to_silver():
             engine = 'pyarrow',
             index = False
         )
+        logger.info(f"[Transform] - Parquet partition by country and state saved in {silver_path}.")
     except Exception as e:
-        logger.exception(f"[Transform] - Execption raised when saving .parquet files in {silver_path}.")
+        logger.exception(f"[Transform] - Exception raised when saving .parquet files in {silver_path}.")
         raise e
     
     
