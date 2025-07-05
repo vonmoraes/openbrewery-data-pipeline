@@ -14,10 +14,20 @@ logger = logging.getLogger(__name__)
 silver_path = "data/silver/"
 gold_path = "data/gold/"
 
-'''
-- Brings all .parquet files from folder subfolders. 
-'''
 def get_all_parquet_files(folder_path, pattern="**"):
+    '''
+    Brings all .parquet files from folder subfolders.
+
+    Args:
+        folder_path (str): Path to the folder where Parquet files will be searched.
+        pattern (str): Pattern to filter files in subfolders. Defaults to "**".
+
+    Returns:
+        parquet_files (list): List of paths to all Parquet files found.
+
+    Raises:
+        Exception: If no Parquet files are found in the specified folder.
+    '''
     full_pattern = os.path.join(folder_path, pattern, "*.parquet")
     parquet_files = glob.glob(full_pattern, recursive=True)
     if not parquet_files:
@@ -25,23 +35,21 @@ def get_all_parquet_files(folder_path, pattern="**"):
         raise Exception(f"NotFoundParquetFiles")
     return parquet_files
 
-
-''''
-- Loads all parquet files
-Parameters:
------------
-parquet_files
- Input DataFrame with raw column names.
-
-Returns:
---------
-pd.DataFrame
- DataFrame with cleaned column names.
-    
-'''
 def load_parquet_files_to_dataframe(folder_path):
+    '''
+    Loads all Parquet files from a folder into a single DataFrame.
+
+    Args:
+        folder_path (str): Path to the folder containing Parquet files.
+
+    Returns:
+        df (pd.DataFrame): DataFrame containing data from all Parquet files.
+
+    Raises:
+        Exception: If there is an error while reading the Parquet dataset.
+    '''
     try:
-        logger.info("[Load] - Reading dataset with partition info using pyarrow.dataset...")
+        logger.info("[Load] - Reading dataset with partition info.")
         dataset = ds.dataset(folder_path, format="parquet", partitioning="hive")
         df = dataset.to_table().to_pandas()
         return df
@@ -49,7 +57,13 @@ def load_parquet_files_to_dataframe(folder_path):
         logger.exception(f"[Load] - Exception reading parquet dataset with partition columns: {e}")
         return pd.DataFrame()
 
-def breweries_by_state_and_brewery_type_aggregated_silver_to_gold():
+def breweries_by_country_and_brewery_type_aggregated_silver_to_gold():
+    '''
+    Aggregates brewery data by country and brewery type, then saves it to the Gold layer.
+
+    Raises:
+        Exception: If there is an error during aggregation or saving the output file.
+    '''
     os.makedirs(gold_path, exist_ok=True)
     
     logger.info(f"[Load] - Starting loading data aggregated by 'brewery coutry and brewery type' from {silver_path} to {gold_path} ...")
@@ -77,4 +91,4 @@ def breweries_by_state_and_brewery_type_aggregated_silver_to_gold():
         raise e
 
 if __name__ == '__main__':
-    breweries_by_state_and_brewery_type_aggregated_silver_to_gold()
+    breweries_by_country_and_brewery_type_aggregated_silver_to_gold()

@@ -18,10 +18,22 @@ logger = logging.getLogger(__name__)
 bronze_path = "data/bronze/breweries/"
 silver_path = "data/silver/"
 
-'''
-- Brings the latest file from folder path. 
-'''
+
 def get_latest_file(folder_path, pattern="*"):
+    '''
+    Brings the latest file from a folder path.
+
+    Args:
+        folder_path (str): Path to the folder where files will be searched.
+        pattern (str): Pattern to filter files (e.g., "*.json", "*.parquet"). Defaults to "*".
+
+    Returns:
+        latest_file (str): Path of the latest file based on modification time.
+
+    Raises:
+        Exception: If no files are found in the specified folder.
+    '''
+    
     full_pattern = os.path.join(folder_path, pattern)
     files = list(filter(os.path.isfile, glob.glob(full_pattern)))
     if not files:
@@ -30,20 +42,16 @@ def get_latest_file(folder_path, pattern="*"):
     latest_file = files[-1]
     return latest_file
 
-'''
-- Cleans and standardizes column names in a DataFrame.
-
-Parameters:
------------
-df : pd.DataFrame
- Input DataFrame with raw column names.
-
-Returns:
---------
-pd.DataFrame
- DataFrame with cleaned column names.
-'''
 def standard_columns_names(df: pd.DataFrame) -> pd.DataFrame:
+    '''
+    Cleans and standardizes column names in a DataFrame.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame with raw column names.
+
+    Returns:
+        pd.DataFrame: DataFrame with cleaned and standardized column names.
+    '''
     def remove_nfkd(txt):
         nfkd = unicodedata.normalize('NFKD', txt)
         return ''.join([c for c in nfkd if not unicodedata.combining(c)])
@@ -58,20 +66,16 @@ def standard_columns_names(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = new_columns_names
     return df
 
-'''
-- Cleans and processes the breweries DataFrame.
-
-Parameters:
------------
-raw_df : pd.DataFrame
- Input raw DataFrame.
-
-Returns:
---------
-pd.DataFrame
- Cleaned and processed DataFrame.
-'''
 def clean_breweries_df(raw_df:pd.DataFrame) -> pd.DataFrame:
+    '''
+    Cleans and processes the breweries DataFrame.
+
+    Args:
+        raw_df (pd.DataFrame): Input raw DataFrame containing brewery data.
+
+    Returns:
+        pd.DataFrame: Cleaned and processed DataFrame with standardized values and types.
+    '''
     treated_df = raw_df.copy()
     treated_df = treated_df.drop_duplicates(subset=["id"])
     treated_df = treated_df.dropna(subset=["name", "state"])
@@ -104,22 +108,36 @@ def clean_breweries_df(raw_df:pd.DataFrame) -> pd.DataFrame:
     treated_df = treated_df.replace({pd.NA,"<NA>", np.nan }, None)  # padronizar a falta de dados
     return treated_df
 
-
 def clean_country_state(value):
-  if pd.isna(value): 
-      return None
-  value = unicodedata.normalize('NFKD', value)
-  value = ''.join([c for c in value if not unicodedata.combining(c)])
-  value = value.strip()
-  value = re.sub(r'\s+', ' ', value)
-  value = value.title()
-  value = re.sub(r'[^\w\s]', '', value)
-  return value
+    '''
+    Cleans and processes the country and state columns.
 
-'''
-- Transforms raw brewery data from the Bronze layer to the Silver layer.
-'''
+    Args:
+        value (str): String value to be cleaned.
+
+    Returns:
+        str: Cleaned string value.
+    '''
+    if pd.isna(value): 
+        return None
+    value = unicodedata.normalize('NFKD', value)
+    value = ''.join([c for c in value if not unicodedata.combining(c)])
+    value = value.strip()
+    value = re.sub(r'\s+', ' ', value)
+    value = value.title()
+    value = re.sub(r'[^\w\s]', '', value)
+    return value
+
 def transform_breweries_bronze_to_silver():
+    '''
+    Transforms raw brewery data from the Bronze layer to the Silver layer.
+
+    Raises:
+        Exception: If there is an error during file reading, processing, or saving.
+'''
+    
+    
+    
     os.makedirs(silver_path, exist_ok=True)
 
     logger.info(f"[Transform] - Starting data transformation from {bronze_path} files...")
