@@ -1,23 +1,17 @@
 import os
 import glob
-import json
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from scripts.extract import extract_breweries
+from scripts.transform import transform_breweries_bronze_to_silver, silver_path
 
 def test_transform_creates_parquet():
     
-    for f in glob.glob("data/bronze/breweries_raw_*.json"):
-        os.remove(f)
+    transform_breweries_bronze_to_silver()
+    assert os.path.exists(silver_path)
 
-    extract_breweries()
+    full_pattern = os.path.join(silver_path, "**", "*.parquet")
+    parquet_files = glob.glob(full_pattern, recursive=True)
 
-    arquivos = glob.glob("data/bronze/breweries_raw_*.json")
-    assert len(arquivos) > 0, "None file was created."
-
-    with open(arquivos[0], "r", encoding="utf-8") as f:
-        dados = json.load(f)
-        assert isinstance(dados, list), "Invalid data from api"
-        assert len(dados) > 0, "None records was found from api."
+    assert len(parquet_files) > 0
