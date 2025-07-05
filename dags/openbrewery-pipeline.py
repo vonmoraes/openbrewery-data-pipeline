@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0,"/opt/airflow/")
 from scripts.extract import extract_breweries
 from scripts.transform import transform_breweries_bronze_to_silver
-from scripts.load_aggregated_view import breweries_by_state_and_brewery_type_aggregated_silver_to_gold
+from scripts.load_aggregated_view import breweries_by_country_and_brewery_type_aggregated_silver_to_gold
 
 import logging
 task_logger = logging.getLogger("airflow.task")
@@ -41,11 +41,11 @@ transform_breweries_bronze_to_silver_task = PythonOperator(
     dag=dag,
 )
 
-breweries_by_state_and_brewery_type_aggregated_silver_to_gold_task = PythonOperator(
+breweries_by_country_and_brewery_type_aggregated_silver_to_gold_task = PythonOperator(
     task_id='load_data_task',
-    python_callable=breweries_by_state_and_brewery_type_aggregated_silver_to_gold,
+    python_callable=breweries_by_country_and_brewery_type_aggregated_silver_to_gold,
     provide_context=True,
     dag=dag,
 )
 
-extract_breweries_task >> transform_breweries_bronze_to_silver_task >> breweries_by_state_and_brewery_type_aggregated_silver_to_gold_task
+extract_breweries_task >> transform_breweries_bronze_to_silver_task >> breweries_by_country_and_brewery_type_aggregated_silver_to_gold_task
