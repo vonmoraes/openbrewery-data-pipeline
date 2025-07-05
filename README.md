@@ -86,8 +86,10 @@ Default credentials:
 - Username: airflow
 - Password: airflow
 
-You will see this dag: 
+You will see this dag:
+
 ![dag_image](docs/dag_example.png)
+![dag_graph](docs/dag_graph.png) 
 
 ## Tests
 
@@ -139,6 +141,6 @@ python scripts/load_aggregated_view.py
 - [Stack Overflow – How to get the latest file in a folder](https://stackoverflow.com/questions/39327032/how-to-get-the-latest-file-in-a-folder)  
 - [Stack Overflow – Replacing pandas or numpy NaN with None](https://stackoverflow.com/questions/14162723/replacing-pandas-or-numpy-nan-with-a-none-to-use-with-mysqldb)  
 - [Apache Arrow Documentation – Parquet I/O in Python](https://arrow.apache.org/docs/python/parquet.html)  
-- [YouTube – Apache Airflow para Iniciantes (PT-BR)](https://www.youtube.com/watch?v=5NA57Pfpdr4)
-
-
+- [Apache Airflow Docker Tutorial](https://medium.com/@le.oasis/apache-airflow-docker-tutorial-2c8c152a074a)
+- [Tutorial como instalar Apache Airflow com Docker](https://lumagallacio.medium.com/tutorial-como-instalar-apache-airflow-com-docker-ab818d1a55e6)
+- [Tutorial Primeira DAG com Airflow](https://lumagallacio.medium.com/primera-dag-com-airflow-6aefdc0d3184)
